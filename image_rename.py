@@ -14,7 +14,7 @@ def random_timestamp():
 def rename_images():
     # Get the assets directory path relative to the script
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    assets_dir = os.path.join(script_dir, 'assets')
+    assets_dir = os.path.join(script_dir, 'other')
     
     # Check if assets directory exists
     if not os.path.exists(assets_dir):
