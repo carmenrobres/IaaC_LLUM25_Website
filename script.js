@@ -1,271 +1,272 @@
-document.addEventListener("DOMContentLoaded", function () {
-  class GalleryApp {
-    constructor() {
-      // Main containers
-      this.galleryContainer = document.querySelector(".gallery");
-      this.headerContainer = this.createHeaderContainer();
-      this.filterControls = this.createFilterControls();
-      
-      // Modal elements
-      this.imgModal = document.querySelector(".img-modal");
-      this.imgViewContainer = this.imgModal?.querySelector(".img");
-      this.modalName = this.imgModal?.querySelector(".img-name p");
-      this.closeBtn = document.querySelector(".close-btn");
-      
+// Gallery Application
+class GalleryApp {
+  constructor() {
+      // DOM Elements
+      this.elements = {
+          gallery: document.querySelector(".gallery"),
+          header: document.querySelector(".header-container"),
+          modal: {
+              container: document.querySelector(".img-modal"),
+              image: document.querySelector(".img-modal .img"),
+              name: document.querySelector(".img-modal .img-name p"),
+              closeBtn: document.querySelector(".close-btn")
+          }
+      };
+
       // State
-      this.allImages = [];
-      this.sortAscending = true;
-      this.timeline = gsap.timeline({ paused: true });
-      
+      this.state = {
+          images: [],
+          sortDirection: 'asc',
+          selectedDay: 'all',
+          isModalOpen: false,
+          currentImage: null
+      };
+
+      // Constants
+      this.constants = {
+          repoDetails: {
+              owner: 'jmuozan',
+              repo: 'IaaC_LLUM25_Website',
+              path: 'assets'
+          },
+          imagePath: './assets/'
+      };
+
       // Initialize
-      this.setupEventListeners();
-      this.initializeModal();
-      this.fetchImages();
-    }
+      this.init();
+  }
 
-    createHeaderContainer() {
-      const headerContainer = document.createElement("div");
-      headerContainer.classList.add("header-container");
-      headerContainer.style.cssText = `
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin: 4em 50px 2em 50px;
-        width: calc(100% - 100px);
-      `;
+  async init() {
+      try {
+          this.initializeFilterControls();
+          this.initializeModal();
+          this.setupEventListeners();
+          await this.fetchImages();
+          this.initializeLucideIcons();
+      } catch (error) {
+          console.error('Initialization error:', error);
+          this.showError('Failed to initialize the gallery. Please refresh the page.');
+      }
+  }
 
-      // Move existing h1 into header container
-      const existingH1 = document.querySelector("h1");
-      const h1Parent = existingH1.parentNode;
-      headerContainer.appendChild(existingH1);
-      existingH1.style.margin = "0";
-      
-      h1Parent.insertBefore(headerContainer, h1Parent.firstChild);
-      return headerContainer;
-    }
-
-    createFilterControls() {
+  initializeFilterControls() {
+      // Create filter container
       const filterContainer = document.createElement("div");
-      filterContainer.classList.add("filter-controls");
-      filterContainer.style.cssText = `
-        display: flex;
-        gap: 20px;
-        align-items: center;
-      `;
+      filterContainer.className = "filter-controls";
 
       // Create day filter
       const daySelect = document.createElement("select");
-      daySelect.style.cssText = `
-        padding: 8px 16px;
-        border-radius: 0px;
-        background: #1a1a1a;
-        color: white;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        cursor: pointer;
-      `;
-      const defaultOption = document.createElement("option");
-      defaultOption.value = "all";
-      defaultOption.textContent = "All Days";
-      daySelect.appendChild(defaultOption);
-
-      // Create sort toggle
-      const sortToggle = document.createElement("button");
-      sortToggle.textContent = "↓ Chronological";
-      sortToggle.style.cssText = `
-        padding: 8px 16px;
-        border-radius: 0px;
-        background: #1a1a1a;
-        color: white;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        cursor: pointer;
-        min-width: 140px;
-      `;
-
+      daySelect.innerHTML = '<option value="all">All Days</option>';
+      
+      // Create sort button
+      const sortButton = document.createElement("button");
+      sortButton.textContent = "↓ Chronological";
+      
+      // Add to DOM
       filterContainer.appendChild(daySelect);
-      filterContainer.appendChild(sortToggle);
-      this.headerContainer.appendChild(filterContainer);
+      filterContainer.appendChild(sortButton);
+      this.elements.header.appendChild(filterContainer);
 
-      return {
-        container: filterContainer,
-        daySelect,
-        sortToggle
-      };
-    }
-
-    parseTimeFromFilename(filename) {
-      const match = filename.match(/(\d{2})-(\d{2})_(\d+)/);
-      if (match) {
-        const [, hours, minutes, day] = match;
-        return {
-          day: parseInt(day),
-          hours: parseInt(hours),
-          minutes: parseInt(minutes)
-        };
-      }
-      return null;
-    }
-
-    compareFilenames(a, b) {
-      const timeA = this.parseTimeFromFilename(a);
-      const timeB = this.parseTimeFromFilename(b);
-      
-      if (!timeA || !timeB) return 0;
-      
-      const multiplier = this.sortAscending ? 1 : -1;
-      
-      if (timeA.day !== timeB.day) return (timeA.day - timeB.day) * multiplier;
-      if (timeA.hours !== timeB.hours) return (timeA.hours - timeB.hours) * multiplier;
-      return (timeA.minutes - timeB.minutes) * multiplier;
-    }
-
-    createGalleryItem(filename) {
-      const item = document.createElement("div");
-      item.classList.add("item");
-
-      const itemImg = document.createElement("div");
-      itemImg.classList.add("item-img");
-
-      const img = document.createElement("img");
-      img.src = `./assets/${filename}`;
-      img.loading = "lazy";
-      itemImg.appendChild(img);
-
-      const itemName = document.createElement("div");
-      itemName.classList.add("item-name");
-      
-      const timeInfo = this.parseTimeFromFilename(filename);
-      const displayName = timeInfo ? 
-        `Day ${timeInfo.day} - ${timeInfo.hours}:${timeInfo.minutes.toString().padStart(2, '0')}` :
-        filename;
-      
-      itemName.innerHTML = `<p>${displayName}</p>`;
-      itemName.setAttribute("data-img", filename.replace(/\.(jpeg|jpg)$/, ""));
-
-      item.appendChild(itemImg);
-      item.appendChild(itemName);
-
-      item.addEventListener("click", () => this.handleItemClick(itemName));
-
-      return item;
-    }
-
-    handleItemClick(itemName) {
-      if (!this.imgViewContainer || !this.modalName) return;
-
-      const dataImg = itemName.getAttribute("data-img");
-      const clickedItemImgSrc = `./assets/${dataImg}.jpeg`;
-      const clickedItemName = itemName.textContent;
-
-      this.imgViewContainer.innerHTML = `<img src="${clickedItemImgSrc}" alt="" />`;
-      this.modalName.textContent = clickedItemName;
-      this.timeline.reversed(!this.timeline.reversed());
-    }
-
-    updateGallery() {
-      const selectedDay = this.filterControls.daySelect.value;
-      let filteredImages = this.allImages;
-
-      if (selectedDay !== 'all') {
-        filteredImages = this.allImages.filter(filename => {
-          const timeInfo = this.parseTimeFromFilename(filename);
-          return timeInfo && timeInfo.day.toString() === selectedDay;
-        });
-      }
-
-      filteredImages.sort((a, b) => this.compareFilenames(a, b));
-      
-      this.galleryContainer.innerHTML = '';
-      filteredImages.forEach(filename => {
-        this.galleryContainer.appendChild(this.createGalleryItem(filename));
-      });
-    }
-
-    initializeModal() {
-      if (!this.imgModal) return;
-
-      this.timeline
-        .to(".img-modal", 0.75, {
-          clipPath: "polygon(0 0%, 100% 0%, 100% 100%, 0% 100%)",
-          ease: "power4.inOut",
-          pointerEvents: "auto",
-        })
-        .to(".gallery, .container", 0.01, {
-          pointerEvents: "none",
-        })
-        .to(".img-modal .img", 0.75, {
-          clipPath: "polygon(0 0%, 100% 0%, 100% 100%, 0% 100%)",
-          ease: "power4.inOut",
-        })
-        .to(
-          ".modal-item p",
-          1,
-          {
-            top: 0,
-            ease: "power4.inOut",
-            stagger: {
-              amount: 0.2,
-            },
-          },
-          "<"
-        )
-        .reverse();
-    }
-
-    setupEventListeners() {
-      this.filterControls.daySelect.addEventListener('change', () => this.updateGallery());
-      
-      this.filterControls.sortToggle.addEventListener('click', () => {
-        this.sortAscending = !this.sortAscending;
-        this.filterControls.sortToggle.textContent = this.sortAscending ? 
-          "↓ Chronological" : "↑ Reverse Order";
-        this.updateGallery();
-      });
-
-      if (this.closeBtn) {
-        this.closeBtn.addEventListener("click", () => {
-          this.timeline.reversed(!this.timeline.reversed());
-        });
-      }
-    }
-
-    async fetchImages() {
-      try {
-        const owner = 'jmuozan';
-        const repo = 'IaaC_LLUM25_Website';
-        const path = 'assets';
-
-        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-        const data = await response.json();
-        if (!Array.isArray(data)) throw new Error('Expected an array of files');
-
-        this.allImages = data
-          .filter(file => /\.(jpeg|jpg)$/i.test(file.name))
-          .map(file => file.name);
-
-        // Populate day filter options
-        const days = new Set(
-          this.allImages
-            .map(filename => this.parseTimeFromFilename(filename)?.day)
-            .filter(Boolean)
-        );
-
-        [...days].sort((a, b) => a - b).forEach(day => {
-          const option = document.createElement("option");
-          option.value = day.toString();
-          option.textContent = `Day ${day}`;
-          this.filterControls.daySelect.appendChild(option);
-        });
-
-        this.updateGallery();
-      } catch (error) {
-        console.error('Error:', error);
-        this.galleryContainer.innerHTML = '<p style="color: white;">Error loading gallery. Please refresh the page.</p>';
-      }
-    }
+      // Store references
+      this.elements.filters = { daySelect, sortButton };
   }
 
-  // Initialize the gallery application
+  initializeModal() {
+      this.modal = gsap.timeline({ paused: true });
+      
+      // Set up modal animation
+      this.modal
+          .to(".img-modal", {
+              clipPath: "polygon(0 0%, 100% 0%, 100% 100%, 0% 100%)",
+              duration: 0.75,
+              ease: "power4.inOut",
+              pointerEvents: "auto"
+          })
+          .to(".gallery, .container", {
+              pointerEvents: "none",
+              duration: 0.01
+          })
+          .to(".img-modal .img", {
+              clipPath: "polygon(0 0%, 100% 0%, 100% 100%, 0% 100%)",
+              duration: 0.75,
+              ease: "power4.inOut"
+          })
+          .to(".modal-item p", {
+              top: 0,
+              duration: 1,
+              ease: "power4.inOut",
+              stagger: { amount: 0.2 }
+          }, "<")
+          .reverse();
+  }
+
+  setupEventListeners() {
+      // Filter events
+      this.elements.filters.daySelect.addEventListener('change', () => {
+          this.state.selectedDay = this.elements.filters.daySelect.value;
+          this.updateGallery();
+      });
+
+      this.elements.filters.sortButton.addEventListener('click', () => {
+          this.state.sortDirection = this.state.sortDirection === 'asc' ? 'desc' : 'asc';
+          this.elements.filters.sortButton.textContent = 
+              this.state.sortDirection === 'asc' ? "↓ Chronological" : "↑ Reverse Order";
+          this.updateGallery();
+      });
+
+      // Modal events
+      this.elements.modal.closeBtn?.addEventListener('click', () => this.toggleModal());
+
+      // Window resize event
+      window.addEventListener('resize', this.handleResize.bind(this));
+  }
+
+  async fetchImages() {
+      try {
+          const { owner, repo, path } = this.constants.repoDetails;
+          const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`);
+          
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          
+          const data = await response.json();
+          
+          if (!Array.isArray(data)) throw new Error('Expected an array of files');
+
+          // Filter and store images
+          this.state.images = data
+              .filter(file => /\.(jpeg|jpg)$/i.test(file.name))
+              .map(file => file.name);
+
+          // Update day filter options
+          this.updateDayFilterOptions();
+
+          // Initial gallery render
+          this.updateGallery();
+
+      } catch (error) {
+          console.error('Error fetching images:', error);
+          this.showError('Failed to load images. Please try again later.');
+      }
+  }
+
+  updateDayFilterOptions() {
+      const days = new Set(
+          this.state.images
+              .map(filename => this.parseTimeFromFilename(filename)?.day)
+              .filter(Boolean)
+      );
+
+      const options = Array.from(days)
+          .sort((a, b) => a - b)
+          .map(day => `<option value="${day}">Day ${day}</option>`);
+
+      this.elements.filters.daySelect.innerHTML = 
+          '<option value="all">All Days</option>' + options.join('');
+  }
+
+  parseTimeFromFilename(filename) {
+      const match = filename.match(/(\d{2})-(\d{2})_(\d+)/);
+      if (match) {
+          const [, hours, minutes, day] = match;
+          return {
+              day: parseInt(day),
+              hours: parseInt(hours),
+              minutes: parseInt(minutes),
+              timestamp: new Date(2024, 0, day, hours, minutes).getTime()
+          };
+      }
+      return null;
+  }
+
+  createGalleryItem(filename) {
+      const timeInfo = this.parseTimeFromFilename(filename);
+      const displayName = timeInfo
+          ? `Day ${timeInfo.day} - ${timeInfo.hours}:${String(timeInfo.minutes).padStart(2, '0')}`
+          : filename;
+
+      const item = document.createElement('div');
+      item.className = 'item';
+      item.innerHTML = `
+          <div class="item-img">
+              <img src="${this.constants.imagePath}${filename}" loading="lazy" alt="${displayName}">
+          </div>
+          <div class="item-name">
+              <p>${displayName}</p>
+          </div>
+      `;
+
+      item.addEventListener('click', () => this.openImage(filename, displayName));
+      return item;
+  }
+
+  updateGallery() {
+      let filteredImages = this.state.images;
+
+      // Apply day filter
+      if (this.state.selectedDay !== 'all') {
+          filteredImages = filteredImages.filter(filename => {
+              const timeInfo = this.parseTimeFromFilename(filename);
+              return timeInfo?.day.toString() === this.state.selectedDay;
+          });
+      }
+
+      // Sort images
+      filteredImages.sort((a, b) => {
+          const timeA = this.parseTimeFromFilename(a);
+          const timeB = this.parseTimeFromFilename(b);
+          const multiplier = this.state.sortDirection === 'asc' ? 1 : -1;
+          return (timeA.timestamp - timeB.timestamp) * multiplier;
+      });
+
+      // Update DOM
+      this.elements.gallery.innerHTML = '';
+      const fragment = document.createDocumentFragment();
+      filteredImages.forEach(filename => {
+          fragment.appendChild(this.createGalleryItem(filename));
+      });
+      this.elements.gallery.appendChild(fragment);
+  }
+
+  openImage(filename, displayName) {
+      this.state.currentImage = filename;
+      this.elements.modal.image.innerHTML = `
+          <img src="${this.constants.imagePath}${filename}" alt="${displayName}">
+      `;
+      this.elements.modal.name.textContent = displayName;
+      this.toggleModal();
+  }
+
+  toggleModal() {
+      this.state.isModalOpen = !this.state.isModalOpen;
+      this.modal.reversed(!this.modal.reversed());
+      document.body.style.overflow = this.state.isModalOpen ? 'hidden' : '';
+  }
+
+  handleResize() {
+      // Add any resize-specific handling here
+      if (this.state.isModalOpen) {
+          // Update modal positioning/sizing if needed
+      }
+  }
+
+  showError(message) {
+      this.elements.gallery.innerHTML = `
+          <div class="error-message">
+              <p style="color: white; text-align: center; padding: 20px;">
+                  ${message}
+              </p>
+          </div>
+      `;
+  }
+
+  initializeLucideIcons() {
+      if (typeof lucide !== 'undefined' && lucide.createIcons) {
+          lucide.createIcons();
+      }
+  }
+}
+
+// Initialize the application when the DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
   new GalleryApp();
 });

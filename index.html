@@ -4,44 +4,412 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IaaC LLUM 25</title>
-    
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300..800&display=swap" rel="stylesheet">
-    
-    <!-- Your Styles -->
-    <link rel="stylesheet" href="styles.css">
 
+    
+    <!-- Font Awesome -->
+    <script src="https://kit.fontawesome.com/1ea8c7c824.js" crossorigin="anonymous"></script>
+    
     <!-- GSAP for animations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        /* Reset and Base Styles */
+        :root {
+            --color-bg-primary: #0f0f0f;
+            --color-bg-secondary: #090909;
+            --color-bg-tertiary: #1a1a1a;
+            --color-text-primary: #ffffff;
+            --color-text-secondary: #808080;
+            --color-border: rgba(255, 255, 255, 0.125);
+            
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --spacing-2xl: 48px;
+            --spacing-3xl: 64px;
+            
+            --container-max-width: 1400px;
+            --container-padding: 5%;
+            
+            --transition-standard: all 0.3s ease-in-out;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            font-family: "Funnel Display", "NB Architekt Std", sans-serif;
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Typography */
+        h1 {
+            font-weight: 500;
+            font-size: 2rem;
+            letter-spacing: -0.02em;
+        }
+
+        p {
+            margin: 0;
+            font-size: 0.75rem;
+            color: var(--color-text-secondary);
+        }
+
+        /* Layout Components */
+        .container {
+            width: 90%;
+            max-width: var(--container-max-width);
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: var(--spacing-3xl) var(--spacing-2xl) var(--spacing-2xl);
+            width: calc(100% - var(--spacing-2xl) * 2);
+        }
+
+        /* Filter Controls */
+        .filter-controls {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+
+        .filter-controls select,
+        .filter-controls button {
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: 0;
+            background: var(--color-bg-tertiary);
+            color: var(--color-text-primary);
+            border: 1px solid var(--color-border);
+            cursor: pointer;
+            transition: var(--transition-standard);
+            font-family: inherit;
+            font-size: 0.875rem;
+            min-width: 140px;
+        }
+
+        .filter-controls select:hover,
+        .filter-controls button:hover {
+            border-color: var(--color-text-primary);
+        }
+
+        /* Gallery Grid */
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-3xl);
+            width: 100%;
+            padding: 0 var(--spacing-2xl);
+        }
+
+        .item {
+            position: relative;
+            border: 1px solid var(--color-border);
+            overflow: hidden;
+            aspect-ratio: 1;
+            cursor: pointer;
+            transition: var(--transition-standard);
+        }
+
+        .item:hover {
+            border-color: var(--color-text-primary);
+        }
+
+        .item-img {
+            height: calc(100% - 40px);
+            overflow: hidden;
+            padding: var(--spacing-md);
+        }
+
+        .item-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition-standard);
+        }
+
+        .item:hover .item-img img {
+            transform: scale(1.05);
+        }
+
+        .item-name {
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 var(--spacing-sm);
+            background: var(--color-bg-tertiary);
+        }
+
+        /* Modal Styles */
+        .img-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--color-bg-secondary);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-3xl) 0;
+            pointer-events: none;
+            clip-path: polygon(0 100%, 100% 100%, 100% 100%, 0% 100%);
+            z-index: 1000;
+        }
+
+        .img-modal .img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(80vw, 800px);
+            height: auto;
+            max-height: 80vh;
+            clip-path: polygon(0 100%, 100% 100%, 100% 100%, 0% 100%);
+        }
+
+        .img-modal .img img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .modal-item {
+            position: relative;
+            width: max-content;
+            height: max-content;
+            color: var(--color-text-primary);
+        }
+
+        .modal-item p {
+            position: relative;
+            font-size: 0.875rem;
+            color: var(--color-text-primary);
+            top: var(--spacing-md);
+        }
+
+        .modal-item-revealer {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .modal-item-revealer:after {
+            content: "";
+            position: absolute;
+            top: var(--spacing-md);
+            width: 100%;
+            height: 100%;
+            background: var(--color-bg-secondary);
+        }
+
+        .close-btn {
+            cursor: pointer;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: 1px solid var(--color-border);
+            background: var(--color-bg-tertiary);
+            color: var(--color-text-primary);
+            transition: var(--transition-standard);
+        }
+
+        .close-btn:hover {
+            border-color: var(--color-text-primary);
+        }
+
+        /* Footer Styles */
+        .footer {
+            width: 100%;
+            padding: var(--spacing-2xl) 0;
+            background: var(--color-bg-secondary);
+            margin-top: auto;
+            border-top: 1px solid var(--color-border);
+        }
+
+        .footer-content {
+            width: 90%;
+            max-width: var(--container-max-width);
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 var(--spacing-2xl);
+        }
+
+        .footer-text {
+            display: flex;
+            align-items: center;
+        }
+
+        .footer-link {
+            color: var(--color-text-primary);
+            text-decoration: none;
+            font-size: 1rem;
+            transition: var(--transition-standard);
+        }
+
+        .footer-link:hover {
+            color: var(--color-text-secondary);
+        }
+
+        .social-links {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+
+        .social-link {
+            color: var(--color-text-primary);
+            transition: var(--transition-standard);
+            font-size: 1.2rem;
+        }
+
+        .social-link:hover {
+            color: var(--color-text-secondary);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                gap: var(--spacing-lg);
+                margin: var(--spacing-2xl) var(--spacing-lg);
+                width: calc(100% - var(--spacing-lg) * 2);
+            }
+            
+            .filter-controls {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                padding: 0 var(--spacing-lg);
+            }
+
+            .footer-content {
+                flex-direction: column;
+                gap: var(--spacing-lg);
+                text-align: center;
+                padding: 0 var(--spacing-lg);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: var(--spacing-sm);
+            }
+            
+            .item-img {
+                padding: var(--spacing-sm);
+            }
+            
+            .filter-controls select,
+            .filter-controls button {
+                width: 100%;
+                min-width: unset;
+            }
+            
+            .img-modal .img {
+                width: 90vw;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="container" scroll-container="">
-        <h1 id="iaac-llum-25" scroll-section="">IaaC LLUM 25</h1>
-        
-        <div class="gallery" scroll-section="">
-            <!-- Gallery items will be dynamically generated by JavaScript -->
-        </div>
-    </div>
-
-    <div class="img-modal">
-        <div class="img-name modal-item">
-            <p>img name</p>
-            <div class="modal-item-revealer"></div>
+    <main>
+        <div class="container scroll-container">
+            <div class="header-container">
+                <h1 id="iaac-llum-25" scroll-section>IaaC LLUM 25</h1>
+            </div>
+            
+            <div class="gallery scroll-section">
+                <!-- Gallery items will be injected here by JavaScript -->
+            </div>
         </div>
 
-        <div class="close-btn modal-item">
-            <p>close</p>
-            <div class="modal-item-revealer"></div>
+        <div class="img-modal">
+            <div class="img-name modal-item">
+                <p>img name</p>
+                <div class="modal-item-revealer"></div>
+            </div>
+
+            <div class="close-btn modal-item">
+                <p>close</p>
+                <div class="modal-item-revealer"></div>
+            </div>
+
+            <div class="img">
+                <!-- Modal image will be injected here by JavaScript -->
+            </div>
         </div>
 
-        <div class="img">
-            <img src="./assets/img1.jpeg" alt="">
-        </div>
-    </div>
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-text">
+                    <a href="https://iaac.net/" class="footer-link" target="_blank" rel="noopener noreferrer">
+                        IaaC LLUM 25
+                    </a>
+                </div>
+                <div class="social-links">
+                    <a href="https://github.com/jmuozan/IaaC_LLUM25" class="social-link" target="_blank" rel="noopener noreferrer">
+                        <i class="fa-brands fa-github"></i>
+                    </a>
+                    <a href="https://www.linkedin.com/school/institute-for-advanced-architecture-of-catalonia/posts/?feedView=all" class="social-link" target="_blank" rel="noopener noreferrer">
+                        <i class="fa-brands fa-linkedin-in"></i>
+                    </a>
+                    <a href="" class="social-link" target="_blank" rel="noopener noreferrer">
+                        <i class="fa-brands fa-instagram"></i>
+                    </a>
+                    <a href="https://x.com/IAAC" class="social-link" target="_blank" rel="noopener noreferrer">
+                        <i class="fa-brands fa-twitter"></i>
+                    </a>
+                </div>
+            </div>
+        </footer>
+    </main>
 
-    <!-- Your Scripts -->
     <script src="script.js"></script>
 </body>
 </html>
