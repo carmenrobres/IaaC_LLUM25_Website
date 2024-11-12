@@ -11,9 +11,43 @@ document.addEventListener("DOMContentLoaded", function () {
   // GitHub repository details
   const owner = 'jmuozan';
   const repo = 'IaaC_LLUM25_Website';
-  const path = 'assets'; // The folder path in your repository
+  const path = 'assets';
 
-  // Fetch images from GitHub repository
+  // Function to parse time from filename
+  function parseTimeFromFilename(filename) {
+    const match = filename.match(/(\d{2})-(\d{2})_(\d+)/);
+    if (match) {
+      const [, hours, minutes, day] = match;
+      return {
+        day: parseInt(day),
+        hours: parseInt(hours),
+        minutes: parseInt(minutes)
+      };
+    }
+    return null;
+  }
+
+  // Custom sorting function
+  function compareFilenames(a, b) {
+    const timeA = parseTimeFromFilename(a);
+    const timeB = parseTimeFromFilename(b);
+    
+    if (!timeA || !timeB) return 0;
+    
+    // Compare days first
+    if (timeA.day !== timeB.day) {
+      return timeA.day - timeB.day;
+    }
+    
+    // If same day, compare hours
+    if (timeA.hours !== timeB.hours) {
+      return timeA.hours - timeB.hours;
+    }
+    
+    // If same hour, compare minutes
+    return timeA.minutes - timeB.minutes;
+  }
+
   fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`)
     .then(response => {
       if (!response.ok) {
@@ -22,21 +56,21 @@ document.addEventListener("DOMContentLoaded", function () {
       return response.json();
     })
     .then(data => {
-      // Check if data is an array
       if (!Array.isArray(data)) {
         console.log('Received data:', data);
         throw new Error('Expected an array of files');
       }
 
-      // Filter for jpeg files
+      // Filter for jpeg files and sort them
       const imageFiles = data
         .filter(file => 
           file.name.toLowerCase().endsWith('.jpeg') || 
           file.name.toLowerCase().endsWith('.jpg')
         )
-        .map(file => file.name);
+        .map(file => file.name)
+        .sort(compareFilenames);
 
-      console.log('Found images:', imageFiles);
+      console.log('Found and sorted images:', imageFiles);
 
       // Create gallery items
       imageFiles.forEach(filename => {
@@ -48,12 +82,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const imgTag = document.createElement("img");
         imgTag.src = `./assets/${filename}`;
-        imgTag.loading = "lazy"; // Add lazy loading for better performance
+        imgTag.loading = "lazy";
         itemImg.appendChild(imgTag);
 
         const itemName = document.createElement("div");
         itemName.classList.add("item-name");
-        itemName.innerHTML = `<p>${filename}</p>`;
+        
+        // Format the display name to be more readable
+        const timeInfo = parseTimeFromFilename(filename);
+        const displayName = timeInfo ? 
+          `Day ${timeInfo.day} - ${timeInfo.hours}:${timeInfo.minutes.toString().padStart(2, '0')}` :
+          filename;
+        
+        itemName.innerHTML = `<p>${displayName}</p>`;
         itemName.setAttribute("data-img", filename.replace(/\.(jpeg|jpg)$/, ""));
 
         item.appendChild(itemImg);
