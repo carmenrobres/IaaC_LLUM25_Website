@@ -8,19 +8,35 @@ document.addEventListener("DOMContentLoaded", function () {
   let clickedItemImgSrc = "";
   let clickedItemName = "";
 
-  // Replace these with your GitHub repository details
-  const owner = 'YOUR_GITHUB_USERNAME';
-  const repo = 'YOUR_REPOSITORY_NAME';
+  // GitHub repository details
+  const owner = 'jmuozan';
+  const repo = 'IaaC_LLUM25_Website';
   const path = 'assets'; // The folder path in your repository
 
   // Fetch images from GitHub repository
   fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`)
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
     .then(data => {
+      // Check if data is an array
+      if (!Array.isArray(data)) {
+        console.log('Received data:', data);
+        throw new Error('Expected an array of files');
+      }
+
       // Filter for jpeg files
       const imageFiles = data
-        .filter(file => file.name.toLowerCase().endsWith('.jpeg'))
+        .filter(file => 
+          file.name.toLowerCase().endsWith('.jpeg') || 
+          file.name.toLowerCase().endsWith('.jpg')
+        )
         .map(file => file.name);
+
+      console.log('Found images:', imageFiles);
 
       // Create gallery items
       imageFiles.forEach(filename => {
@@ -32,12 +48,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const imgTag = document.createElement("img");
         imgTag.src = `./assets/${filename}`;
+        imgTag.loading = "lazy"; // Add lazy loading for better performance
         itemImg.appendChild(imgTag);
 
         const itemName = document.createElement("div");
         itemName.classList.add("item-name");
         itemName.innerHTML = `<p>${filename}</p>`;
-        itemName.setAttribute("data-img", filename.replace(".jpeg", ""));
+        itemName.setAttribute("data-img", filename.replace(/\.(jpeg|jpg)$/, ""));
 
         item.appendChild(itemImg);
         item.appendChild(itemName);
@@ -58,6 +75,7 @@ document.addEventListener("DOMContentLoaded", function () {
     })
     .catch(error => {
       console.error('Error fetching images:', error);
+      console.log('Error details:', error.message);
       galleryContainer.innerHTML = '<p style="color: white;">Error loading gallery. Please refresh the page.</p>';
     });
 
