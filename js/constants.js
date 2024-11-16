@@ -7,7 +7,7 @@ export const GALLERY_CONFIG = {
     },
     imagePath: './assets/img/',  // Updated image path
     thumbnailPath: './assets/img/thumbnails/',  // Updated thumbnail path
-    imagesPerPage: 12
+    imagesPerPage: 15
 };
 
 export const SELECTORS = {
