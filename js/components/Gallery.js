@@ -1,151 +1,121 @@
-// js/components/Gallery.js
-import { parseTimeFromFilename, createDisplayName } from '../utils/imageUtils.js';
-import { GALLERY_CONFIG } from '../constants.js';
+// components/Gallery.js
 
 export class Gallery {
-    constructor(container, modal) {
+    constructor(container, modal, textService) {
         this.container = container;
         this.modal = modal;
-        this.observer = null;
-        this.state = {
-            currentPage: 1,
-            sortDirection: 'asc',
-            selectedDay: 'all',
-            images: [] // Add images to state
+        this.textService = textService;
+        this.currentImages = [];
+        this.currentTextMap = new Map();
+        this.filters = {
+            day: 'all'
         };
-
-        this.initializeIntersectionObserver();
+        
+        this.initObserver();
     }
 
-    initializeIntersectionObserver() {
-        this.observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    if (img.dataset.src) {
+    initObserver() {
+        this.observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
                         this.loadImage(img);
+                        this.observer.unobserve(img);
                     }
-                }
-            });
-        }, {
-            rootMargin: '50px 0px',
-            threshold: 0.1
-        });
+                });
+            },
+            {
+                rootMargin: '50px'
+            }
+        );
     }
 
     loadImage(img) {
-        const tempImg = new Image();
-        tempImg.onload = () => {
-            img.src = tempImg.src;
-            img.classList.add('loaded');
-            img.parentElement.parentElement.classList.remove('loading');
-        };
-        tempImg.src = img.dataset.src;
-        delete img.dataset.src;
-        this.observer.unobserve(img);
+        return new Promise((resolve, reject) => {
+            img.onload = () => {
+                img.classList.add('loaded');
+                resolve(img);
+            };
+            img.onerror = () => {
+                img.classList.add('error');
+                reject(new Error(`Failed to load image: ${img.src}`));
+            };
+            img.src = img.dataset.src;
+        });
     }
 
-    createItem(filename) {
-        const timeInfo = parseTimeFromFilename(filename);
-        const displayName = createDisplayName(timeInfo, filename);
-
+    createGalleryItem(imageName) {
         const item = document.createElement('div');
         item.className = 'item loading';
-        
+
         item.innerHTML = `
             <div class="item-img">
                 <img 
-                    src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-                    data-src="${GALLERY_CONFIG.imagePath}${filename}"
+                    data-src="assets/img/${imageName}" 
+                    alt="${imageName}"
                     loading="lazy"
-                    alt="${displayName}"
-                    style="background-color: #1a1a1a;"
                 >
             </div>
             <div class="item-name">
-                <p>${displayName}</p>
+                <p>${imageName}</p>
             </div>
         `;
 
         const img = item.querySelector('img');
         this.observer.observe(img);
 
+        img.addEventListener('load', () => {
+            item.classList.remove('loading');
+        });
+
         item.addEventListener('click', () => {
-            this.modal.updateContent(`${GALLERY_CONFIG.imagePath}${filename}`, displayName);
-            this.modal.toggle();
+            this.modal.open({
+                imageSrc: `assets/img/${imageName}`,
+                imageName: imageName,
+                textContent: this.currentTextMap.get(imageName) || ''
+            });
         });
 
         return item;
     }
 
-    addScrollTrigger() {
-        const trigger = document.createElement('div');
-        trigger.className = 'scroll-trigger';
-        
-        const observer = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting) {
-                this.state.currentPage++;
-                this.updateGallery(); // Now uses internal state
-                observer.disconnect();
-            }
-        }, { rootMargin: '100px' });
-
-        observer.observe(trigger);
-        this.container.appendChild(trigger);
-    }
-
     filterImages() {
-        let filteredImages = [...this.state.images];
-
-        if (this.state.selectedDay !== 'all') {
-            filteredImages = filteredImages.filter(filename => {
-                const timeInfo = parseTimeFromFilename(filename);
-                return timeInfo?.day.toString() === this.state.selectedDay;
-            });
+        if (this.filters.day === 'all') {
+            return this.currentImages;
         }
-
-        filteredImages.sort((a, b) => {
-            const timeA = parseTimeFromFilename(a);
-            const timeB = parseTimeFromFilename(b);
-            const multiplier = this.state.sortDirection === 'asc' ? 1 : -1;
-            return (timeA.timestamp - timeB.timestamp) * multiplier;
-        });
-
-        return filteredImages;
+        return this.currentImages.filter(image => image.includes(this.filters.day));
     }
 
-    updateGallery(newImages = null) {
-        // Update images if new ones are provided
-        if (newImages !== null) {
-            this.state.images = newImages;
-        }
-
-        const filteredImages = this.filterImages();
-        const start = 0;
-        const end = this.state.currentPage * GALLERY_CONFIG.imagesPerPage;
-        const imagesToShow = filteredImages.slice(start, end);
-
+    updateGallery(images, textMap = new Map()) {
+        this.currentImages = images;
+        this.currentTextMap = textMap;
         this.container.innerHTML = '';
         
         const fragment = document.createDocumentFragment();
-        imagesToShow.forEach(filename => {
-            fragment.appendChild(this.createItem(filename));
-        });
-        this.container.appendChild(fragment);
-
-        if (end < filteredImages.length) {
-            this.addScrollTrigger();
+        const filteredImages = this.filterImages();
+        
+        for (const image of filteredImages) {
+            const item = this.createGalleryItem(image);
+            fragment.appendChild(item);
         }
+        
+        this.container.appendChild(fragment);
     }
 
-    // Add method to update filter state
+    updateTextContent(textMap) {
+        this.currentTextMap = textMap;
+    }
+
     updateFilters(type, value) {
-        if (type === 'day') {
-            this.state.selectedDay = value;
-        } else if (type === 'sort') {
-            this.state.sortDirection = value;
-        }
-        this.state.currentPage = 1;
-        this.updateGallery();
+        this.filters[type] = value;
+        this.updateGallery(this.currentImages, this.currentTextMap);
+    }
+
+    destroy() {
+        this.observer.disconnect();
+        this.container.innerHTML = '';
+        this.currentImages = [];
+        this.currentTextMap.clear();
     }
 }

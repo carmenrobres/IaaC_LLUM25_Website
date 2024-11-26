@@ -230,83 +230,97 @@ p {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: var(--color-bg-secondary);
+  background: rgba(9, 9, 9, 0.95);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  padding: var(--spacing-3xl) 0;
-  pointer-events: none;
-  clip-path: polygon(0 100%, 100% 100%, 100% 100%, 0% 100%);
+  gap: var(--spacing-xl);
   z-index: 1000;
+  padding: var(--spacing-2xl);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.img-modal.open {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .img-modal .img {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: min(60vw, 600px);
+  position: relative;
+  width: auto;
   height: auto;
-  max-height: 70vh;
-  clip-path: polygon(0 100%, 100% 100%, 100% 100%, 0% 100%);
-  z-index: 1001; /* Ensure image is below other modal elements */
+  max-width: 80vw;
+  max-height: 60vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .img-modal .img img {
-  width: 100%;
-  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
 }
 
-
-.modal-item {
-  position: relative;
-  width: max-content;
-  height: max-content;
+.modal-text-content {
+  width: 100%;
+  max-width: 600px;
+  padding: 0 var(--spacing-xl);
   color: var(--color-text-primary);
+  z-index: 1003;
 }
 
-.modal-item p {
-  position: relative;
-  font-size: 0.875rem;
-  color: var(--color-text-primary);
-  top: var(--spacing-md);
-}
-
-/* Remove or comment out these blocks */
-/*
-.modal-item-revealer {
-    position: absolute;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1002;
-}
-
-.modal-item-revealer:after {
-    content: "";
-    position: absolute;
-    top: var(--spacing-md);
-    width: 100%;
-    height: 100%;
-    background: var(--color-bg-secondary);
-}
-*/
-
-.close-btn {
-  cursor: pointer;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid var(--color-border);
+.text-content {
   background: var(--color-bg-tertiary);
-  color: var(--color-text-primary);
-  transition: var(--transition-standard);
-  position: relative;
-  z-index: 1003; /* Ensure close button is always on top */
-  pointer-events: auto; /* Make sure the button is clickable */
+  padding: var(--spacing-lg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
-.close-btn:hover {
+.text-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.text-content::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+.text-content::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+.text-content::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+}
+
+.img-modal .img-name {
+  color: var(--color-text-primary);
+  margin-top: var(--spacing-md);
+  text-align: center;
+}
+
+.img-modal .close-btn {
+  position: fixed;
+  top: var(--spacing-xl);
+  right: var(--spacing-xl);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  z-index: 1004;
+  pointer-events: auto;
+}
+
+.img-modal .close-btn:hover {
   border-color: var(--color-text-primary);
 }
 
@@ -322,59 +336,6 @@ p {
 .error-message p {
   color: var(--color-text-primary);
   font-size: 1rem;
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .gallery {
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .header-container {
-    flex-direction: column;
-    gap: var(--spacing-lg);
-    margin: var(--spacing-2xl) var(--spacing-lg);
-    width: calc(100% - var(--spacing-lg) * 2);
-  }
-  
-  .filter-controls {
-    width: 100%;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  
-  .gallery {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    padding: 0 var(--spacing-lg);
-  }
-  
-  .img-modal .img {
-    width: min(75vw, 500px); /* Adjusted for mobile */
-    max-height: 65vh;
-  }
-}
-
-@media (max-width: 480px) {
-  .gallery {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: var(--spacing-sm);
-  }
-  
-  .item-img {
-    padding: var(--spacing-sm);
-  }
-  
-  .filter-controls select,
-  .filter-controls button {
-    width: 100%;
-    min-width: unset;
-  }
-  .img-modal .img {
-    width: 85vw;
-    max-height: 60vh;
-  }
 }
 
 /* Footer Styles */
@@ -447,4 +408,72 @@ p {
 
 .fade-in {
   animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .gallery {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .header-container {
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    margin: var(--spacing-2xl) var(--spacing-lg);
+    width: calc(100% - var(--spacing-lg) * 2);
+  }
+  
+  .filter-controls {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .gallery {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    padding: 0 var(--spacing-lg);
+  }
+  
+  .img-modal {
+    padding: var(--spacing-lg);
+  }
+  
+  .img-modal .img {
+    max-width: 90vw;
+    max-height: 50vh;
+  }
+  
+  .modal-text-content {
+    padding: 0 var(--spacing-md);
+    margin: var(--spacing-lg) auto;
+  }
+  
+  .img-modal .close-btn {
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .gallery {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: var(--spacing-sm);
+  }
+  
+  .item-img {
+    padding: var(--spacing-sm);
+  }
+  
+  .filter-controls select,
+  .filter-controls button {
+    width: 100%;
+    min-width: unset;
+  }
+  
+  .img-modal .img {
+    width: 85vw;
+    max-height: 60vh;
+  }
 }

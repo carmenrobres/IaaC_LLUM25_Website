@@ -1,22 +1,35 @@
-// src/js/services/ImageService.js
+// services/ImageService.js
 import { GALLERY_CONFIG } from '../constants.js';
 
 export class ImageService {
     async fetchImages() {
         try {
-            const { owner, repo, path } = GALLERY_CONFIG.repoDetails;
-            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`);
+            const response = await fetch(GALLERY_CONFIG.imagePath);
             
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             
-            const data = await response.json();
+            // Check if we got valid HTML content
+            const html = await response.text();
             
-            if (!Array.isArray(data)) throw new Error('Expected an array of files');
+            // Parse the directory listing HTML
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Get all links that point to image files
+            const imageFiles = Array.from(doc.querySelectorAll('a'))
+                .map(a => a.href)
+                .filter(href => /\.(jpg|jpeg)$/i.test(href))
+                .map(href => href.split('/').pop());
 
-            return data
-                .filter(file => /\.(jpeg|jpg)$/i.test(file.name))
-                .map(file => file.name);
+            // Sort images by timestamp in the filename
+            return imageFiles.sort((a, b) => {
+                const timeA = a.split('_')[0];
+                const timeB = b.split('_')[0];
+                return timeA.localeCompare(timeB);
+            });
+
         } catch (error) {
+            console.error('Error fetching images:', error);
             throw new Error('Failed to fetch images: ' + error.message);
         }
     }
