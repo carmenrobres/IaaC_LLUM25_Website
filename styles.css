@@ -274,22 +274,25 @@ p {
   top: var(--spacing-md);
 }
 
+/* Remove or comment out these blocks */
+/*
 .modal-item-revealer {
-  position: absolute;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1002; /* Match modal-item z-index */
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1002;
 }
 
 .modal-item-revealer:after {
-  content: "";
-  position: absolute;
-  top: var(--spacing-md);
-  width: 100%;
-  height: 100%;
-  background: var(--color-bg-secondary);
+    content: "";
+    position: absolute;
+    top: var(--spacing-md);
+    width: 100%;
+    height: 100%;
+    background: var(--color-bg-secondary);
 }
+*/
 
 .close-btn {
   cursor: pointer;
