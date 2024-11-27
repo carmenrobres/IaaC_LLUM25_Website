@@ -4,30 +4,31 @@ import { GALLERY_CONFIG } from '../constants.js';
 export class ImageService {
     async fetchImages() {
         try {
-            // Get the list of files from your assets/img directory
-            const response = await fetch(`/${GALLERY_CONFIG.repoDetails.repo}/assets/img/`);
+            const { owner, repo, path } = GALLERY_CONFIG.repoDetails;
+            const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=main`;
+            
+            const response = await fetch(apiUrl, {
+                headers: {
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            // Parse the directory listing HTML
-            const html = await response.text();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
+            const data = await response.json();
             
-            // Get all image file links
-            const imageFiles = Array.from(doc.querySelectorAll('a'))
-                .map(a => a.href)
-                .filter(href => /\.(jpg|jpeg)$/i.test(href))
-                .map(href => href.split('/').pop())
+            // Filter for image files and sort by timestamp
+            return data
+                .filter(file => /\.(jpg|jpeg)$/i.test(file.name))
+                .map(file => file.name)
                 .sort((a, b) => {
+                    // Sort by the timestamp in the filename
                     const timeA = a.split('_')[0];
                     const timeB = b.split('_')[0];
                     return timeA.localeCompare(timeB);
                 });
-
-            return imageFiles;
 
         } catch (error) {
             console.error('Error fetching images:', error);

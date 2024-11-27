@@ -1,10 +1,10 @@
-// app.js
 import { SELECTORS } from './constants.js';
 import { ImageService } from './services/ImageService.js';
 import { TextService } from './services/TextService.js';
 import { Modal } from './components/Modal.js';
 import { Gallery } from './components/Gallery.js';
 import { FilterControls } from './components/FilterControls.js';
+
 
 class GalleryApp {
     constructor() {
