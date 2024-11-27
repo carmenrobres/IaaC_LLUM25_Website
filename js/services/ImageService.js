@@ -4,25 +4,24 @@ import { GALLERY_CONFIG } from '../constants.js';
 export class ImageService {
     async fetchImages() {
         try {
-            const { owner, repo, path } = GALLERY_CONFIG.repoDetails;
-            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`);
+            // Get the list of files from your assets/img directory
+            const response = await fetch(`/${GALLERY_CONFIG.repoDetails.repo}/assets/img/`);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            const data = await response.json();
+            // Parse the directory listing HTML
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
             
-            if (!Array.isArray(data)) {
-                throw new Error('Expected an array of files');
-            }
-
-            // Get only jpg/jpeg files and extract just the filenames
-            const imageFiles = data
-                .filter(file => /\.(jpg|jpeg)$/i.test(file.name))
-                .map(file => file.name)
+            // Get all image file links
+            const imageFiles = Array.from(doc.querySelectorAll('a'))
+                .map(a => a.href)
+                .filter(href => /\.(jpg|jpeg)$/i.test(href))
+                .map(href => href.split('/').pop())
                 .sort((a, b) => {
-                    // Sort by the timestamp in the filename (e.g., "23-46_9.jpeg")
                     const timeA = a.split('_')[0];
                     const timeB = b.split('_')[0];
                     return timeA.localeCompare(timeB);
