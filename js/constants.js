@@ -5,8 +5,9 @@ export const GALLERY_CONFIG = {
         repo: 'IaaC_LLUM25_Website',
         path: 'assets/img'
     },
-    imagePath: '/assets/img/',
-    thumbnailPath: '/assets/img/thumbnails/',
+    // Use absolute paths for GitHub Pages
+    imagePath: '/IaaC_LLUM25_Website/assets/img/',
+    thumbnailPath: '/IaaC_LLUM25_Website/assets/img/thumbnails/',
     imagesPerPage: 15
 };
 

@@ -50,6 +50,7 @@ export class Gallery {
         const item = document.createElement('div');
         item.className = 'item loading';
 
+        // In Gallery.js, when creating image paths:
         const imagePath = `${GALLERY_CONFIG.imagePath}${imageName}`;
 
         item.innerHTML = `
