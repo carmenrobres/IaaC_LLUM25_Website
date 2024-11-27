@@ -16,7 +16,7 @@ export class ImageService {
             
             const images = data
                 .filter(file => /\.(jpg|jpeg)$/i.test(file.name))
-                .map(file => file.name)
+                .map(file => file.name) 
                 .sort((a, b) => {
                     const timeA = a.split('_')[0];
                     const timeB = b.split('_')[0];
