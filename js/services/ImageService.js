@@ -4,21 +4,19 @@ import { GALLERY_CONFIG } from '../constants.js';
 export class ImageService {
     async fetchImages() {
         try {
-            const { owner, repo, path } = GALLERY_CONFIG.repoDetails;
-            const response = await fetch(`/${repo}/assets/img/`);
+            const { owner, repo } = GALLERY_CONFIG.repoDetails;
+            // Use GitHub's API to get repository contents
+            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/assets/img`);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            const html = await response.text();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
+            const data = await response.json();
             
-            const images = Array.from(doc.querySelectorAll('a'))
-                .map(a => a.href)
-                .filter(href => /\.(jpg|jpeg)$/i.test(href))
-                .map(href => href.split('/').pop())
+            const images = data
+                .filter(file => /\.(jpg|jpeg)$/i.test(file.name))
+                .map(file => file.name)
                 .sort((a, b) => {
                     const timeA = a.split('_')[0];
                     const timeB = b.split('_')[0];
@@ -27,6 +25,7 @@ export class ImageService {
 
             return images;
         } catch (error) {
+            console.error('Error details:', error);
             throw new Error('Failed to fetch images: ' + error.message);
         }
     }
