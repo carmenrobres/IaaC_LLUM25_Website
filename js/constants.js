@@ -5,8 +5,13 @@ export const GALLERY_CONFIG = {
         repo: 'IaaC_LLUM25_Website',
         path: 'assets/img'
     },
-    imagePath: '/IaaC_LLUM25_Website/assets/img/',  // Updated for GitHub Pages
-    thumbnailPath: '/IaaC_LLUM25_Website/assets/img/thumbnails/',  // Updated for GitHub Pages
+    // Use relative paths when in production (GitHub Pages)
+    imagePath: window.location.hostname === 'jmuozan.github.io' ? 
+        '/IaaC_LLUM25_Website/assets/img/' : 
+        '/assets/img/',
+    thumbnailPath: window.location.hostname === 'jmuozan.github.io' ? 
+        '/IaaC_LLUM25_Website/assets/img/thumbnails/' : 
+        '/assets/img/thumbnails/',
     imagesPerPage: 15
 };
 
