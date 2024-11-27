@@ -66,7 +66,7 @@ export class Gallery {
             </div>
         `;
 
-        const img = item.querySelector('img');
+        const img = item.querySelector('img'); 
         this.observer.observe(img);
 
         img.addEventListener('load', () => {
