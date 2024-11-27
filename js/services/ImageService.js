@@ -4,29 +4,31 @@ import { GALLERY_CONFIG } from '../constants.js';
 export class ImageService {
     async fetchImages() {
         try {
-            const response = await fetch(GALLERY_CONFIG.imagePath);
+            const { owner, repo, path } = GALLERY_CONFIG.repoDetails;
+            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`);
             
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
             
-            // Check if we got valid HTML content
-            const html = await response.text();
+            const data = await response.json();
             
-            // Parse the directory listing HTML
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            
-            // Get all links that point to image files
-            const imageFiles = Array.from(doc.querySelectorAll('a'))
-                .map(a => a.href)
-                .filter(href => /\.(jpg|jpeg)$/i.test(href))
-                .map(href => href.split('/').pop());
+            if (!Array.isArray(data)) {
+                throw new Error('Expected an array of files');
+            }
 
-            // Sort images by timestamp in the filename
-            return imageFiles.sort((a, b) => {
-                const timeA = a.split('_')[0];
-                const timeB = b.split('_')[0];
-                return timeA.localeCompare(timeB);
-            });
+            // Get only jpg/jpeg files and extract just the filenames
+            const imageFiles = data
+                .filter(file => /\.(jpg|jpeg)$/i.test(file.name))
+                .map(file => file.name)
+                .sort((a, b) => {
+                    // Sort by the timestamp in the filename (e.g., "23-46_9.jpeg")
+                    const timeA = a.split('_')[0];
+                    const timeB = b.split('_')[0];
+                    return timeA.localeCompare(timeB);
+                });
+
+            return imageFiles;
 
         } catch (error) {
             console.error('Error fetching images:', error);

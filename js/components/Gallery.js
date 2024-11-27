@@ -45,14 +45,17 @@ export class Gallery {
         });
     }
 
+    // Update the createGalleryItem method in Gallery.js
     createGalleryItem(imageName) {
         const item = document.createElement('div');
         item.className = 'item loading';
 
+        const imagePath = `${GALLERY_CONFIG.imagePath}${imageName}`;
+
         item.innerHTML = `
             <div class="item-img">
                 <img 
-                    data-src="assets/img/${imageName}" 
+                    data-src="${imagePath}" 
                     alt="${imageName}"
                     loading="lazy"
                 >
@@ -71,7 +74,7 @@ export class Gallery {
 
         item.addEventListener('click', () => {
             this.modal.open({
-                imageSrc: `assets/img/${imageName}`,
+                imageSrc: imagePath,  // Use the same image path here
                 imageName: imageName,
                 textContent: this.currentTextMap.get(imageName) || ''
             });

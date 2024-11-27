@@ -1,12 +1,12 @@
-// js/constants.js
+// constants.js
 export const GALLERY_CONFIG = {
     repoDetails: {
         owner: 'jmuozan',
         repo: 'IaaC_LLUM25_Website',
-        path: 'assets/img'  // Updated path to include img subfolder
+        path: 'assets/img'
     },
-    imagePath: './assets/img/',  // Updated image path
-    thumbnailPath: './assets/img/thumbnails/',  // Updated thumbnail path
+    imagePath: '/IaaC_LLUM25_Website/assets/img/',  // Updated for GitHub Pages
+    thumbnailPath: '/IaaC_LLUM25_Website/assets/img/thumbnails/',  // Updated for GitHub Pages
     imagesPerPage: 15
 };
 
