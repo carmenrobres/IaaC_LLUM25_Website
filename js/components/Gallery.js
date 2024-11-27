@@ -1,4 +1,5 @@
 // components/Gallery.js
+import { GALLERY_CONFIG } from '../constants.js';
 
 export class Gallery {
     constructor(container, modal, textService) {
@@ -45,7 +46,6 @@ export class Gallery {
         });
     }
 
-    // Update the createGalleryItem method in Gallery.js
     createGalleryItem(imageName) {
         const item = document.createElement('div');
         item.className = 'item loading';
@@ -65,7 +65,7 @@ export class Gallery {
             </div>
         `;
 
-        const img = item.querySelector('img'); 
+        const img = item.querySelector('img');
         this.observer.observe(img);
 
         img.addEventListener('load', () => {

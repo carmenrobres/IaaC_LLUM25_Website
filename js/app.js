@@ -5,7 +5,6 @@ import { Modal } from './components/Modal.js';
 import { Gallery } from './components/Gallery.js';
 import { FilterControls } from './components/FilterControls.js';
 
-
 class GalleryApp {
     constructor() {
         this.imageService = new ImageService();
