@@ -1,4 +1,6 @@
 // TextService.js
+import { GALLERY_CONFIG } from '/IaaC_LLUM25_Website/js/constants.js';
+
 export class TextService {
     async fetchTextContent(imageName) {
         try {

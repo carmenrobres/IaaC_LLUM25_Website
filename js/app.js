@@ -1,9 +1,11 @@
-import { SELECTORS } from './constants.js';
-import { ImageService } from './services/ImageService.js';
-import { TextService } from './services/TextService.js';
-import { Modal } from './components/Modal.js';
-import { Gallery } from './components/Gallery.js';
-import { FilterControls } from './components/FilterControls.js';
+// app.js
+import { SELECTORS, GALLERY_CONFIG } from '/IaaC_LLUM25_Website/js/constants.js';
+import { ImageService } from '/IaaC_LLUM25_Website/js/services/ImageService.js';
+import { TextService } from '/IaaC_LLUM25_Website/js/services/TextService.js';
+import { Modal } from '/IaaC_LLUM25_Website/js/components/Modal.js';
+import { Gallery } from '/IaaC_LLUM25_Website/js/components/Gallery.js';
+import { FilterControls } from '/IaaC_LLUM25_Website/js/components/FilterControls.js';
+
 
 class GalleryApp {
     constructor() {

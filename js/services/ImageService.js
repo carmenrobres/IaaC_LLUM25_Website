@@ -1,5 +1,6 @@
 // ImageService.js
-import { GALLERY_CONFIG } from '../constants.js';
+import { GALLERY_CONFIG } from '/IaaC_LLUM25_Website/js/constants.js';
+
 
 export class ImageService {
     async fetchImages() {

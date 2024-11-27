@@ -1,5 +1,4 @@
-// components/Gallery.js
-import { GALLERY_CONFIG } from '../constants.js';
+import { GALLERY_CONFIG } from '/IaaC_LLUM25_Website/js/constants.js';
 
 export class Gallery {
     constructor(container, modal, textService) {
