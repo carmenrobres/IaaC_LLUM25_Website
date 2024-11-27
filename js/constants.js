@@ -17,7 +17,7 @@ export const GALLERY_CONFIG = {
 
 export const SELECTORS = {
     gallery: ".gallery",
-    header: ".header-container",
+    header: ".header-container", 
     modal: {
         container: ".img-modal",
         image: ".img-modal .img",
