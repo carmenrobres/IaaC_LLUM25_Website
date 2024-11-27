@@ -1,22 +1,24 @@
-// TextService.js
+// services/TextService.js
 import { GALLERY_CONFIG } from '/IaaC_LLUM25_Website/js/constants.js';
 
 export class TextService {
     async fetchTextContent(imageName) {
         try {
             const { owner, repo } = GALLERY_CONFIG.repoDetails;
-            const branch = 'main'; // or 'master' depending on your default branch
             const textFileName = imageName.replace(/\.(jpg|jpeg)$/i, '.txt');
             
-            const response = await fetch(
-                `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/assets/txt/${textFileName}`
-            );
+            // Use GitHub API to get the text file content
+            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/assets/txt/${textFileName}`);
             
             if (!response.ok) {
+                console.warn(`No text content for ${imageName}`);
                 return '';
             }
             
-            return await response.text();
+            const data = await response.json();
+            // GitHub API returns content as base64 encoded
+            return atob(data.content);
+            
         } catch (error) {
             console.warn(`Could not load text for ${imageName}:`, error);
             return '';
