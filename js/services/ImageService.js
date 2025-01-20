@@ -1,55 +1,52 @@
 // ImageService.js
 import { GALLERY_CONFIG } from '/IaaC_LLUM25_Website/js/constants.js';
 
-
 export class ImageService {
     async fetchImages() {
         try {
-            const { owner, repo } = GALLERY_CONFIG.repoDetails;
-            const branch = 'main'; // or 'master' depending on your default branch
-            
-            // Use raw GitHub content URL
-            const response = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/assets/img/`);
+            // Fetch the directory listing
+            const response = await fetch(`${window.location.origin}${GALLERY_CONFIG.imagePath}`);
             
             if (!response.ok) {
-                // Try alternate method using GitHub API
-                return await this.fetchUsingAPI();
+                throw new Error(`Failed to fetch images directory: ${response.status}`);
             }
+
+            const html = await response.text();
             
-            const text = await response.text();
-            const files = text.match(/href="[^"]*\.(jpg|jpeg)"/gi) || [];
+            // Create a temporary DOM element to parse the HTML
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
             
-            return files
-                .map(file => file.match(/([^\/]+)\.(jpg|jpeg)/i)[0])
-                .sort((a, b) => {
-                    const timeA = a.split('_')[0];
-                    const timeB = b.split('_')[0];
-                    return timeA.localeCompare(timeB);
+            // Find all links that end with jpg or jpeg
+            const imageLinks = Array.from(doc.querySelectorAll('a'))
+                .map(link => link.href)
+                .filter(href => /\.(jpg|jpeg)$/i.test(href))
+                .map(href => {
+                    // Extract just the filename from the full URL
+                    const parts = href.split('/');
+                    return parts[parts.length - 1];
                 });
 
-        } catch (error) {
-            return await this.fetchUsingAPI();
-        }
-    }
-
-    async fetchUsingAPI() {
-        const { owner, repo } = GALLERY_CONFIG.repoDetails;
-        
-        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/assets/img`);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        return data
-            .filter(file => /\.(jpg|jpeg)$/i.test(file.name))
-            .map(file => file.name)
-            .sort((a, b) => {
+            // Sort images by timestamp in filename
+            return imageLinks.sort((a, b) => {
                 const timeA = a.split('_')[0];
                 const timeB = b.split('_')[0];
                 return timeA.localeCompare(timeB);
             });
+
+        } catch (error) {
+            console.error('Error fetching images:', error);
+            // If directory listing fails, try loading a single test image
+            try {
+                const testResponse = await fetch(`${window.location.origin}${GALLERY_CONFIG.imagePath}test.jpg`, { method: 'HEAD' });
+                if (testResponse.ok) {
+                    return ['test.jpg'];
+                }
+            } catch (e) {
+                console.error('Failed to load test image:', e);
+            }
+            
+            throw new Error('Failed to load images. Please ensure images are properly uploaded to the repository.');
+        }
     }
 }
