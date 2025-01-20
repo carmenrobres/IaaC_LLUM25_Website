@@ -2,51 +2,47 @@
 import { GALLERY_CONFIG } from '/IaaC_LLUM25_Website/js/constants.js';
 
 export class ImageService {
+    constructor() {
+        this.baseApiUrl = 'https://api.github.com/repos';
+    }
+
     async fetchImages() {
         try {
-            // Fetch the directory listing
-            const response = await fetch(`${window.location.origin}${GALLERY_CONFIG.imagePath}`);
-            
+            // Use GitHub's REST API to get repository contents
+            const response = await fetch(
+                `${this.baseApiUrl}/${GALLERY_CONFIG.owner}/${GALLERY_CONFIG.repo}/contents/${GALLERY_CONFIG.imagePath}`,
+                {
+                    headers: {
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                }
+            );
+
             if (!response.ok) {
-                throw new Error(`Failed to fetch images directory: ${response.status}`);
+                throw new Error(`GitHub API error: ${response.status}`);
             }
 
-            const html = await response.text();
-            
-            // Create a temporary DOM element to parse the HTML
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            
-            // Find all links that end with jpg or jpeg
-            const imageLinks = Array.from(doc.querySelectorAll('a'))
-                .map(link => link.href)
-                .filter(href => /\.(jpg|jpeg)$/i.test(href))
-                .map(href => {
-                    // Extract just the filename from the full URL
-                    const parts = href.split('/');
-                    return parts[parts.length - 1];
+            const data = await response.json();
+
+            // Filter for image files and extract names
+            const imageFiles = data
+                .filter(file => /\.(jpg|jpeg)$/i.test(file.name))
+                .map(file => file.name)
+                .sort((a, b) => {
+                    const timeA = a.split('_')[0];
+                    const timeB = b.split('_')[0];
+                    return timeA.localeCompare(timeB);
                 });
 
-            // Sort images by timestamp in filename
-            return imageLinks.sort((a, b) => {
-                const timeA = a.split('_')[0];
-                const timeB = b.split('_')[0];
-                return timeA.localeCompare(timeB);
-            });
+            if (imageFiles.length === 0) {
+                throw new Error('No images found in the repository');
+            }
+
+            return imageFiles;
 
         } catch (error) {
             console.error('Error fetching images:', error);
-            // If directory listing fails, try loading a single test image
-            try {
-                const testResponse = await fetch(`${window.location.origin}${GALLERY_CONFIG.imagePath}test.jpg`, { method: 'HEAD' });
-                if (testResponse.ok) {
-                    return ['test.jpg'];
-                }
-            } catch (e) {
-                console.error('Failed to load test image:', e);
-            }
-            
-            throw new Error('Failed to load images. Please ensure images are properly uploaded to the repository.');
+            throw new Error('Failed to load images. Please ensure images are properly uploaded to the repository and the configuration is correct.');
         }
     }
 }

@@ -49,7 +49,7 @@ export class Gallery {
         const item = document.createElement('div');
         item.className = 'item loading';
 
-        const imagePath = `${GALLERY_CONFIG.imagePath}${imageName}`;
+        const imagePath = `${GALLERY_CONFIG.imageUrlPath}${imageName}`;
 
         item.innerHTML = `
             <div class="item-img">
@@ -73,7 +73,7 @@ export class Gallery {
 
         item.addEventListener('click', () => {
             this.modal.open({
-                imageSrc: imagePath,  // Use the same image path here
+                imageSrc: imagePath,
                 imageName: imageName,
                 textContent: this.currentTextMap.get(imageName) || ''
             });

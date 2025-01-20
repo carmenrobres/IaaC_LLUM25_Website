@@ -1,7 +1,13 @@
 // constants.js
 export const GALLERY_CONFIG = {
+    // GitHub repository details
+    owner: 'jmuozan',
+    repo: 'IaaC_LLUM25_Website',
+    imagePath: 'assets/img',  // Path within the repository
+    
+    // Base paths for the website
     basePath: '/IaaC_LLUM25_Website',
-    imagePath: '/IaaC_LLUM25_Website/assets/img/',
+    imageUrlPath: '/IaaC_LLUM25_Website/assets/img/',
     imagesPerPage: 15
 };
 
