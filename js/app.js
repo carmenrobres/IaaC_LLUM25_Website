@@ -45,28 +45,31 @@ class GalleryApp {
 
     async fetchTextContent(images) {
         const textMap = new Map();
-        const batchSize = 5; // Process 5 images at a time
-
+        const batchSize = 3; // Reduce batch size
+        
         for (let i = 0; i < images.length; i += batchSize) {
             const batch = images.slice(i, i + batchSize);
             
-            for (const imageName of batch) {
-                try {
-                    const content = await this.textService.fetchTextContent(imageName);
-                    if (content) {
-                        textMap.set(imageName, content);
+            // Process batch with delay between each batch
+            await Promise.all(
+                batch.map(async (imageName) => {
+                    try {
+                        const content = await this.textService.fetchTextContent(imageName);
+                        if (content) {
+                            textMap.set(imageName, content);
+                        }
+                    } catch (error) {
+                        console.warn(`Failed to fetch text for ${imageName}:`, error);
                     }
-                } catch (error) {
-                    console.warn(`Failed to fetch text for ${imageName}:`, error);
-                }
-            }
-
+                })
+            );
+    
             // Update gallery with current text content
             this.gallery.updateTextContent(textMap);
-
-            // Small delay between batches to prevent overwhelming the server
+    
+            // Larger delay between batches
             if (i + batchSize < images.length) {
-                await new Promise(resolve => setTimeout(resolve, 100));
+                await new Promise(resolve => setTimeout(resolve, 1000));
             }
         }
     }
