@@ -1,53 +1,48 @@
-import { createClient } from './node_modules/@supabase/supabase-js/dist/module/index.js';
+// ImageService.js
+import { GALLERY_CONFIG } from '/IaaC_LLUM25_Website/js/constants.js';
 
-// Use environment variables
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-
-// Initialize the Supabase client
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-class GalleryService {
-    static async getImagesAndTexts() {
-      try {
-        // Fetch image data
-        const { data: images, error: imageError } = await supabase
-          .storage
-          .from(GALLERY_CONFIG.supabaseBucket)
-          .list('', { limit: GALLERY_CONFIG.imagesPerPage });
-  
-        if (imageError) {
-          console.error('Error fetching images:', imageError);
-          return { images: [], texts: new Map() };
-        }
-  
-        // Fetch text data
-        const { data: texts, error: textError } = await supabase
-          .from(GALLERY_CONFIG.textTable)
-          .select('image_url, transcription');
-  
-        if (textError) {
-          console.error('Error fetching text:', textError);
-          return { images: [], texts: new Map() };
-        }
-  
-        // Map text content to images
-        const textMap = new Map();
-        texts.forEach(({ image_url, transcription }) => {
-          textMap.set(image_url, transcription);
-        });
-  
-        // Return images and text map
-        return {
-          images: images.map((image) => `${GALLERY_CONFIG.supabaseUrl}/storage/v1/object/public/${GALLERY_CONFIG.supabaseBucket}/${image.name}`),
-          texts: textMap,
-        };
-      } catch (err) {
-        console.error('Unexpected error:', err);
-        return { images: [], texts: new Map() };
-      }
+export class ImageService {
+    constructor() {
+        this.baseApiUrl = 'https://api.github.com/repos';
     }
-  }
-  
 
-export default ImageService;
+    async fetchImages() {
+        try {
+            // Use GitHub's REST API to get repository contents
+            const response = await fetch(
+                `${this.baseApiUrl}/${GALLERY_CONFIG.owner}/${GALLERY_CONFIG.repo}/contents/${GALLERY_CONFIG.imagePath}`,
+                {
+                    headers: {
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`GitHub API error: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Filter for image files and extract names
+            const imageFiles = data
+                .filter(file => /\.(jpg|jpeg)$/i.test(file.name))
+                .map(file => file.name)
+                .sort((a, b) => {
+                    const timeA = a.split('_')[0];
+                    const timeB = b.split('_')[0];
+                    return timeA.localeCompare(timeB);
+                });
+
+            if (imageFiles.length === 0) {
+                throw new Error('No images found in the repository');
+            }
+
+            return imageFiles;
+
+        } catch (error) {
+            console.error('Error fetching images:', error);
+            throw new Error('Failed to load images. Please ensure images are properly uploaded to the repository and the configuration is correct.');
+        }
+    }
+}

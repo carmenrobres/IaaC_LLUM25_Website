@@ -1,7 +1,7 @@
 // app.js
 import { SELECTORS, GALLERY_CONFIG } from '/IaaC_LLUM25_Website/js/constants.js';
-import { ImageService } from './services/ImageService.js';
-import { TextService } from './services/TextService.js';
+import { ImageService } from '/IaaC_LLUM25_Website/js/services/ImageService.js';
+import { TextService } from '/IaaC_LLUM25_Website/js/services/TextService.js';
 import { Modal } from '/IaaC_LLUM25_Website/js/components/Modal.js';
 import { Gallery } from '/IaaC_LLUM25_Website/js/components/Gallery.js';
 import { FilterControls } from '/IaaC_LLUM25_Website/js/components/FilterControls.js';
@@ -27,35 +27,30 @@ class GalleryApp {
 
     async init() {
         try {
-          // Fetch images and associated texts
-          const { images, texts } = await GalleryService.getImagesAndTexts();
-      
-          console.log('Fetched Images:', images);
-          console.log('Fetched Texts:', texts);
-      
-          if (!images.length) {
-            this.showError('No images to display.');
-            return;
-          }
-      
-          // Update gallery with images and texts
-          this.gallery.updateGallery(images, texts);
-          this.initializeLucideIcons();
+            const images = await this.imageService.fetchImages();
+            
+            // Initialize gallery immediately with images
+            this.filterControls.updateDayOptions(images);
+            this.gallery.updateGallery(images, new Map());
+
+            // Then try to fetch text content in the background
+            this.fetchTextContent(images).catch(console.warn);
+            
+            this.initializeLucideIcons();
         } catch (error) {
-          console.error('Initialization error:', error);
-          this.showError('Failed to initialize the gallery.');
+            console.error('Initialization error:', error);
+            this.showError('Failed to initialize the gallery. Please refresh the page.');
         }
-      }      
-      
-    
+    }
+
     async fetchTextContent(images) {
         const textMap = new Map();
-        const batchSize = 3; // Fetch in batches to avoid overloading requests
-    
+        const batchSize = 3; // Reduce batch size
+        
         for (let i = 0; i < images.length; i += batchSize) {
             const batch = images.slice(i, i + batchSize);
-    
-            // Process each image in the batch
+            
+            // Process batch with delay between each batch
             await Promise.all(
                 batch.map(async (imageName) => {
                     try {
@@ -69,12 +64,12 @@ class GalleryApp {
                 })
             );
     
-            // Update the gallery with current text content
+            // Update gallery with current text content
             this.gallery.updateTextContent(textMap);
     
-            // Add delay between batches for smoother loading
+            // Larger delay between batches
             if (i + batchSize < images.length) {
-                await new Promise((resolve) => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 1000));
             }
         }
     }
