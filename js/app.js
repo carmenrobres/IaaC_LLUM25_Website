@@ -5,6 +5,7 @@ import { Gallery } from '/IaaC_LLUM25_Website/js/components/Gallery.js';
 import { FilterControls } from '/IaaC_LLUM25_Website/js/components/FilterControls.js';
 
 // app.js
+import { supabase } from './services/supabaseClient.js';
 import { ImageService } from './services/ImageService.js';
 import { TextService } from './services/TextService.js';
 
@@ -57,6 +58,16 @@ class GalleryApp {
     showError(message) {
         const gallery = document.querySelector('.gallery');
         gallery.innerHTML = `<p>${message}</p>`;
+    }
+    subscribeToUpdates() {
+        supabase
+            .channel('transcriptions')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'transcriptions' }, async (payload) => {
+                console.log('Change detected:', payload);
+                const images = await this.imageService.fetchImages();
+                this.renderGallery(images);
+            })
+            .subscribe();
     }
 }
 
