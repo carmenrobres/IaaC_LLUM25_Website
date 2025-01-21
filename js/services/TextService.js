@@ -1,5 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from './node_modules/@supabase/supabase-js/dist/module/index.js';
 
 // Use environment variables
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
