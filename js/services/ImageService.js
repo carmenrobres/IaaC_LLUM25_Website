@@ -1,48 +1,32 @@
-// ImageService.js
-import { GALLERY_CONFIG } from '/IaaC_LLUM25_Website/js/constants.js';
+import { createClient } from '@supabase/supabase-js';
 
-export class ImageService {
-    constructor() {
-        this.baseApiUrl = 'https://api.github.com/repos';
+// Initialize Supabase client
+const supabase = createClient(
+    'https://ogezfwngzpwubwypbzvq.supabase.co', // Replace with your Supabase project URL
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nZXpmd25nenB3dWJ3eXBienZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMTUyMzE4MiwiZXhwIjoyMDQ3MDk5MTgyfQ.JW-GhWhgu-iF3_uYzUWEfJ3fjJ6jInd2SeJ3wt881Ak' // Replace with your Supabase anon key
+  );
+
+class ImageService {
+  static async getImages() {
+    try {
+      // Fetch image data from Supabase
+      const { data, error } = await supabase
+        .from('transcriptions') // Replace with your table name
+        .select(' image_url'); // Specify the columns to fetch
+
+
+      if (error) {
+        console.error('Error fetching images:', error);
+        return [];
+      }
+
+      // Return an array of image URLs
+      return data.map((image) => image.url);
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      return [];
     }
-
-    async fetchImages() {
-        try {
-            // Use GitHub's REST API to get repository contents
-            const response = await fetch(
-                `${this.baseApiUrl}/${GALLERY_CONFIG.owner}/${GALLERY_CONFIG.repo}/contents/${GALLERY_CONFIG.imagePath}`,
-                {
-                    headers: {
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                }
-            );
-
-            if (!response.ok) {
-                throw new Error(`GitHub API error: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            // Filter for image files and extract names
-            const imageFiles = data
-                .filter(file => /\.(jpg|jpeg)$/i.test(file.name))
-                .map(file => file.name)
-                .sort((a, b) => {
-                    const timeA = a.split('_')[0];
-                    const timeB = b.split('_')[0];
-                    return timeA.localeCompare(timeB);
-                });
-
-            if (imageFiles.length === 0) {
-                throw new Error('No images found in the repository');
-            }
-
-            return imageFiles;
-
-        } catch (error) {
-            console.error('Error fetching images:', error);
-            throw new Error('Failed to load images. Please ensure images are properly uploaded to the repository and the configuration is correct.');
-        }
-    }
+  }
 }
+
+export default ImageService;
