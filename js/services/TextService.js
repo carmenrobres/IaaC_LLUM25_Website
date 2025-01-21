@@ -21,7 +21,7 @@ class TextService {
       }
 
       // Return an array of text content
-      return data.map((text) => text.content);
+      return data.map((text) => text.transcription);
     } catch (err) {
       console.error('Unexpected error:', err);
       return [];

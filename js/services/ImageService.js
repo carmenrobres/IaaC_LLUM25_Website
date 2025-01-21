@@ -1,10 +1,11 @@
 import { createClient } from './node_modules/@supabase/supabase-js/dist/module/index.js';
 
-// Initialize Supabase client
-const supabase = createClient(
-    'https://ogezfwngzpwubwypbzvq.supabase.co', // Replace with your Supabase project URL
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nZXpmd25nenB3dWJ3eXBienZxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMTUyMzE4MiwiZXhwIjoyMDQ3MDk5MTgyfQ.JW-GhWhgu-iF3_uYzUWEfJ3fjJ6jInd2SeJ3wt881Ak' // Replace with your Supabase anon key
-  );
+// Use environment variables
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+
+// Initialize the Supabase client
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 class ImageService {
   static async getImages() {
@@ -21,7 +22,7 @@ class ImageService {
       }
 
       // Return an array of image URLs
-      return data.map((image) => image.url);
+      return data.map((image) => image.image_url);
     } catch (err) {
       console.error('Unexpected error:', err);
       return [];

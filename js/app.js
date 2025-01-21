@@ -1,7 +1,7 @@
 // app.js
 import { SELECTORS, GALLERY_CONFIG } from '/IaaC_LLUM25_Website/js/constants.js';
-import { ImageService } from '/IaaC_LLUM25_Website/js/services/ImageService.js';
-import { TextService } from '/IaaC_LLUM25_Website/js/services/TextService.js';
+import { ImageService } from './services/ImageService.js';
+import { TextService } from './services/TextService.js';
 import { Modal } from '/IaaC_LLUM25_Website/js/components/Modal.js';
 import { Gallery } from '/IaaC_LLUM25_Website/js/components/Gallery.js';
 import { FilterControls } from '/IaaC_LLUM25_Website/js/components/FilterControls.js';
@@ -27,23 +27,20 @@ class GalleryApp {
 
     async init() {
         try {
-            // Fetch images dynamically using ImageService
-            const images = await this.imageService.fetchImages();
-            
-            // Initialize the gallery with the fetched images
-            this.filterControls.updateDayOptions(images);
-            this.gallery.updateGallery(images, new Map());
-    
-            // Fetch and update text content in the background
-            await this.fetchTextContent(images);
-            
-            // Initialize any required icons (if applicable)
-            this.initializeLucideIcons();
+          const images = await this.imageService.fetchImages();
+          console.log('Fetched Images:', images);
+      
+          this.filterControls.updateDayOptions(images);
+          this.gallery.updateGallery(images, new Map());
+      
+          await this.fetchTextContent(images);
+          this.initializeLucideIcons();
         } catch (error) {
-            console.error('Initialization error:', error);
-            this.showError('Failed to initialize the gallery. Please refresh the page.');
+          console.error('Initialization error:', error);
+          this.showError('Failed to initialize the gallery. Please refresh the page.');
         }
     }
+      
     
     async fetchTextContent(images) {
         const textMap = new Map();
