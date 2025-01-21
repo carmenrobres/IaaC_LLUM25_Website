@@ -1,102 +1,63 @@
 // app.js
 import { SELECTORS, GALLERY_CONFIG } from '/IaaC_LLUM25_Website/js/constants.js';
-import { ImageService } from '/IaaC_LLUM25_Website/js/services/ImageService.js';
-import { TextService } from '/IaaC_LLUM25_Website/js/services/TextService.js';
 import { Modal } from '/IaaC_LLUM25_Website/js/components/Modal.js';
 import { Gallery } from '/IaaC_LLUM25_Website/js/components/Gallery.js';
 import { FilterControls } from '/IaaC_LLUM25_Website/js/components/FilterControls.js';
 
+// app.js
+import { ImageService } from './services/ImageService.js';
+import { TextService } from './services/TextService.js';
 
 class GalleryApp {
     constructor() {
         this.imageService = new ImageService();
         this.textService = new TextService();
-        this.modal = new Modal(SELECTORS.modal);
-        this.gallery = new Gallery(
-            document.querySelector(SELECTORS.gallery),
-            this.modal,
-            this.textService
-        );
-        this.filterControls = new FilterControls(
-            document.querySelector(SELECTORS.header),
-            this.handleFilterChange.bind(this)
-        );
-        
         this.init();
     }
 
     async init() {
         try {
             const images = await this.imageService.fetchImages();
-            
-            // Initialize gallery immediately with images
-            this.filterControls.updateDayOptions(images);
-            this.gallery.updateGallery(images, new Map());
-
-            // Then try to fetch text content in the background
-            this.fetchTextContent(images).catch(console.warn);
-            
-            this.initializeLucideIcons();
+            this.loadGallery(images);
+    
+            // Subscribe to Supabase changes
+            supabase
+                .channel('transcriptions')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'transcriptions' }, () => {
+                    console.log('Database updated, refreshing gallery...');
+                    this.init(); // Reload the gallery on update
+                })
+                .subscribe();
         } catch (error) {
             console.error('Initialization error:', error);
-            this.showError('Failed to initialize the gallery. Please refresh the page.');
+            this.showError('Failed to load the gallery.');
         }
     }
+    
 
-    async fetchTextContent(images) {
-        const textMap = new Map();
-        const batchSize = 3; // Reduce batch size
-        
-        for (let i = 0; i < images.length; i += batchSize) {
-            const batch = images.slice(i, i + batchSize);
-            
-            // Process batch with delay between each batch
-            await Promise.all(
-                batch.map(async (imageName) => {
-                    try {
-                        const content = await this.textService.fetchTextContent(imageName);
-                        if (content) {
-                            textMap.set(imageName, content);
-                        }
-                    } catch (error) {
-                        console.warn(`Failed to fetch text for ${imageName}:`, error);
-                    }
-                })
-            );
-    
-            // Update gallery with current text content
-            this.gallery.updateTextContent(textMap);
-    
-            // Larger delay between batches
-            if (i + batchSize < images.length) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            }
+    async loadGallery(images) {
+        const galleryContainer = document.querySelector('.gallery');
+        galleryContainer.innerHTML = '';
+
+        for (const imageUrl of images) {
+            const transcription = await this.textService.fetchTextContent(imageUrl);
+
+            const item = document.createElement('div');
+            item.className = 'item';
+
+            item.innerHTML = `
+                <img src="${imageUrl}" alt="Image">
+                <p>${transcription}</p>
+            `;
+
+            galleryContainer.appendChild(item);
         }
-    }
-
-    handleFilterChange(filter) {
-        this.gallery.updateFilters(filter.type, filter.value);
     }
 
     showError(message) {
-        const gallery = document.querySelector(SELECTORS.gallery);
-        gallery.innerHTML = `
-            <div class="error-message">
-                <p style="color: white; text-align: center; padding: 20px;">
-                    ${message}
-                </p>
-            </div>
-        `;
-    }
-
-    initializeLucideIcons() {
-        if (typeof lucide !== 'undefined' && lucide.createIcons) {
-            lucide.createIcons();
-        }
+        const gallery = document.querySelector('.gallery');
+        gallery.innerHTML = `<p>${message}</p>`;
     }
 }
 
-// Initialize the application when the DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    new GalleryApp();
-});
+document.addEventListener('DOMContentLoaded', () => new GalleryApp());
