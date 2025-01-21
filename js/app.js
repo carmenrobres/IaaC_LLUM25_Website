@@ -27,19 +27,25 @@ class GalleryApp {
 
     async init() {
         try {
-          const images = await this.imageService.fetchImages();
+          // Fetch images and associated texts
+          const { images, texts } = await GalleryService.getImagesAndTexts();
+      
           console.log('Fetched Images:', images);
+          console.log('Fetched Texts:', texts);
       
-          this.filterControls.updateDayOptions(images);
-          this.gallery.updateGallery(images, new Map());
+          if (!images.length) {
+            this.showError('No images to display.');
+            return;
+          }
       
-          await this.fetchTextContent(images);
+          // Update gallery with images and texts
+          this.gallery.updateGallery(images, texts);
           this.initializeLucideIcons();
         } catch (error) {
           console.error('Initialization error:', error);
-          this.showError('Failed to initialize the gallery. Please refresh the page.');
+          this.showError('Failed to initialize the gallery.');
         }
-    }
+      }      
       
     
     async fetchTextContent(images) {

@@ -7,26 +7,47 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || process.env.
 // Initialize the Supabase client
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-class TextService {
-  static async getTexts() {
-    try {
-      // Fetch text data from Supabase
-      const { data, error } = await supabase
-        .from('transcriptions') // Replace with your table name
-        .select('transcription'); // Specify the columns to fetch
-
-      if (error) {
-        console.error('Error fetching text:', error);
-        return [];
+class GalleryService {
+    static async getImagesAndTexts() {
+      try {
+        // Fetch image data
+        const { data: images, error: imageError } = await supabase
+          .storage
+          .from(GALLERY_CONFIG.supabaseBucket)
+          .list('', { limit: GALLERY_CONFIG.imagesPerPage });
+  
+        if (imageError) {
+          console.error('Error fetching images:', imageError);
+          return { images: [], texts: new Map() };
+        }
+  
+        // Fetch text data
+        const { data: texts, error: textError } = await supabase
+          .from(GALLERY_CONFIG.textTable)
+          .select('image_url, transcription');
+  
+        if (textError) {
+          console.error('Error fetching text:', textError);
+          return { images: [], texts: new Map() };
+        }
+  
+        // Map text content to images
+        const textMap = new Map();
+        texts.forEach(({ image_url, transcription }) => {
+          textMap.set(image_url, transcription);
+        });
+  
+        // Return images and text map
+        return {
+          images: images.map((image) => `${GALLERY_CONFIG.supabaseUrl}/storage/v1/object/public/${GALLERY_CONFIG.supabaseBucket}/${image.name}`),
+          texts: textMap,
+        };
+      } catch (err) {
+        console.error('Unexpected error:', err);
+        return { images: [], texts: new Map() };
       }
-
-      // Return an array of text content
-      return data.map((text) => text.transcription);
-    } catch (err) {
-      console.error('Unexpected error:', err);
-      return [];
     }
   }
-}
+  
 
 export default TextService;

@@ -1,16 +1,13 @@
 // constants.js
 export const GALLERY_CONFIG = {
-    // GitHub repository details
-    owner: 'jmuozan',
     repo: 'IaaC_LLUM25_Website',
-    imagePath: 'assets/img',  // Path within the repository
-    textPath: 'assets/txt',   // Add text path
-    
-    // Base paths for the website
-    basePath: '/IaaC_LLUM25_Website',
-    imageUrlPath: '/IaaC_LLUM25_Website/assets/img/',
-    imagesPerPage: 15
+    supabaseUrl: 'https://ogezfwngzpwubwypbzvq.supabase.co',
+    supabaseBucket: 'images',
+    textTable: 'transcriptions', // Supabase table name for text
+    imagesPerPage: 15,
 };
+
+
 
 export const SELECTORS = {
     gallery: ".gallery",
